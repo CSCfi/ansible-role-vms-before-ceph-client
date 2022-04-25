@@ -1,0 +1,1 @@
+# ansible-role-vms-before-ceph-client
