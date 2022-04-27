@@ -33,7 +33,6 @@ YUM_HISTORY_EVENTS=$(yum history list all|grep -Po "^\s+\d+")
 
 for YUM_HISTORY_EVENT in $YUM_HISTORY_EVENTS; do
   CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep -A1 ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
-  echo $YUM_HISTORY_EVENT
   if versionlte $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
     CEPH_UPGRADE_DATE=$(yum history info $YUM_HISTORY_EVENT|grep '^Begin time'|awk -F' : ' '{print $2}')
     CEPH_UPGRADE_TIMESTAMP=$(date -d "$CEPH_UPGRADE_DATE" +%s)
