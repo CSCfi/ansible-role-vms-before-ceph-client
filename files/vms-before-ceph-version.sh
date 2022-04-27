@@ -10,22 +10,28 @@ versionlte() {
 }
 
 usage() {
-  echo "Usage: $0 [-v 12.2.13]" 1>&2;
-  echo "" 1>&2;
-  echo "  -v, expected ceph version" 1>&2;
-  echo "" 1>&2;
-  exit 1
+  echo "Usage: $0 "
+  echo " [--help|-h|-?],  to show the help"
+  echo "[-v|--version] 12.2.14, expected ceph version"
 }
 
-while getopts ":o:n:edh" arg; do
-  case $arg in
-    v)
-       CEPH_VERSION_EXPECTED=$OPTARG
-       ;;
-    h|*)
-       usage
-       exit 0
-       ;;
+while [ $# -gt 0 ] 
+do
+  case "$1" in
+    "--help"|"-h")
+    shift
+    usage
+    exit 0
+    ;;
+    "-v"|"--version")
+      shift
+      CEPH_VERSION_EXPECTED="${1}"
+      shift
+    ;;
+   *)
+      message "Warning! Ignoring unknwon parameter '${1}'" show
+      shift
+      ;;
   esac
 done
 
@@ -42,9 +48,8 @@ done
 
 if [[ -z "$CEPH_UPGRADE_TIMESTAMP" ]]; then
     echo "There is no Ceph version prior $CEPH_VERSION_EXPECTED is installed" 1>&2
-    exit 1
+    exit 0
 fi
-
 
 echo "+-----------------------------+"
 echo "|   CEPH VERSION IS $CEPH_VERSION   |"
