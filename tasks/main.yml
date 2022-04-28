@@ -9,5 +9,5 @@
   tags: script
   no_log: true
 - name: Run verification script
-  shell: "/root/vms-before-ceph-version.sh {% if ceph_version %} -v {{ ceph_version }} {% endif %}"
+  shell: "/root/vms-before-ceph-version.sh {% if ceph_version is defined %} -v {{ ceph_version }} {% endif %}"
   changed_when: False
