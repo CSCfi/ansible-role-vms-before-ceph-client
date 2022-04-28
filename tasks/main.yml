@@ -11,3 +11,8 @@
 - name: Run verification script
   shell: "/root/vms-before-ceph-version.sh {% if ceph_version is defined %} -v {{ ceph_version }} {% endif %}"
   changed_when: False
+
+- name: Clean verification script
+  ansible.builtin.file:
+    path: /root/vms-before-ceph-version.sh
+    state: absent
