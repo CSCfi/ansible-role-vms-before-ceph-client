@@ -56,7 +56,7 @@ echo "|   CEPH VERSION IS $CEPH_VERSION   |"
 echo "+-----------------------------+"
 
 # Retrieve a list of all QEMU process IDs
-PIDS=$(pgrep -f /usr/libexec/qemu-kvm)
+PIDS=$(pgrep -f "^/usr/libexec/qemu-kvm")
 
 for PID in $PIDS; do
   # Get QEMU process start time
