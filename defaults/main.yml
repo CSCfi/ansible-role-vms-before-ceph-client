@@ -1,3 +1,3 @@
 ---
 # Defaults file for ansible-role-vms-before-ceph-clients
-ceph_version: "12.2.14"
+ceph_version: "14.2.20"

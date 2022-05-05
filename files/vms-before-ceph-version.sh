@@ -3,9 +3,11 @@
 
 # DEFAULTS
 # Search for lanched VMs before this Ceph version
-CEPH_VERSION_EXPECTED="12.2.14"
+CEPH_VERSION_EXPECTED="14.2.20"
 
-versionlte() {
+# This function compares two versions and retrun True
+# if $1 is lower or equal to $2 
+version_le_op() {
     [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
 }
 
@@ -39,7 +41,7 @@ YUM_HISTORY_EVENTS=$(yum history list all|grep -Po "^\s+\d+")
 
 for YUM_HISTORY_EVENT in $YUM_HISTORY_EVENTS; do
   CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep -A1 ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
-  if versionlte $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
+  if version_le_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
     CEPH_UPGRADE_DATE=$(yum history info $YUM_HISTORY_EVENT|grep '^Begin time'|awk -F' : ' '{print $2}')
     CEPH_UPGRADE_TIMESTAMP=$(date -d "$CEPH_UPGRADE_DATE" +%s)
     break
