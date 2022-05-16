@@ -1,5 +1,7 @@
 #!/bin/bash
 # Managed with Ansible
+# Author: Miloud Bagaa
+
 
 # DEFAULTS
 # Search for lanched VMs before this Ceph version
@@ -9,6 +11,12 @@ CEPH_VERSION_EXPECTED="14.2.20"
 # if $1 is lower or equal to $2 
 version_le_op() {
     [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+}
+
+# This function compares two versions and retrun True
+# if $1 is strictly lower than $2 
+version_lt_op() {
+    [ "$1" = "$2" ] && return 1 || version_le_op $1 $2
 }
 
 usage() {
@@ -40,17 +48,44 @@ done
 YUM_HISTORY_EVENTS=$(yum history list all|grep -Po "^\s+\d+")
 
 for YUM_HISTORY_EVENT in $YUM_HISTORY_EVENTS; do
-  CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep -A1 ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
+  CEPH_INFO=$(yum history info $YUM_HISTORY_EVENT|grep ceph-common);
+
+  if [[ ${CEPH_INFO} != *"Dep-Install"* ]] && [[ ${CEPH_INFO} != *"Updated"* ]]; then
+     continue;
+  fi
+
+  if [[ ${CEPH_INFO} == *"Dep-Install"* ]]; then
+     CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
+  fi
+
+  if [[ ${CEPH_INFO} == *"Updated"* ]]; then
+     CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep -A1 ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
+  fi
+
+  CEPH_UPGRADE_DATE=$(yum history info $YUM_HISTORY_EVENT|grep '^Begin time'|awk -F' : ' '{print $2}')
+  CEPH_UPGRADE_TIMESTAMP=$(date -d "$CEPH_UPGRADE_DATE" +%s)
+
   if version_le_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
-    CEPH_UPGRADE_DATE=$(yum history info $YUM_HISTORY_EVENT|grep '^Begin time'|awk -F' : ' '{print $2}')
-    CEPH_UPGRADE_TIMESTAMP=$(date -d "$CEPH_UPGRADE_DATE" +%s)
     break
   fi
+
+  PREVIOUS_CEPH_VERSION=$CEPH_VERSION
+  PREVIOUS_CEPH_UPGRADE_DATE=$CEPH_UPGRADE_DATE
+  PREVIOUS_CEPH_UPGRADE_TIMESTAMP=$CEPH_UPGRADE_TIMESTAMP
+
 done
 
 if [[ -z "$CEPH_UPGRADE_TIMESTAMP" ]]; then
     echo "There is no Ceph version prior $CEPH_VERSION_EXPECTED is installed" 1>&2
     exit 0
+fi
+
+if version_lt_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
+  if [[ ${PREVIOUS_CEPH_UPGRADE_TIMESTAMP+x} ]]; then
+  CEPH_VERSION=$PREVIOUS_CEPH_VERSION
+  CEPH_UPGRADE_DATE=$PREVIOUS_CEPH_UPGRADE_DATE
+  CEPH_UPGRADE_TIMESTAMP=$PREVIOUS_CEPH_UPGRADE_TIMESTAMP
+  fi 
 fi
 
 echo "+-----------------------------+"
