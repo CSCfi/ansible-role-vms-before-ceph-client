@@ -25,3 +25,7 @@ Example Playbook
   roles:
     - { role: ansible-role-vms-before-ceph-client }
 ```
+
+Limitation
+----------
+The current version does not consider the downgrade or remove of Ceph clients in hypervisors.
