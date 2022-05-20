@@ -92,7 +92,7 @@ fi
 for YUM_EVENT in $YUM_HISTORY_EVENTS; do
 
   # Omit the check of previous events. Continue the loop
-  if [[ ${YUM_HISTORY_EVENT} -ge ${YUM_EVENT} ]]; then
+  if [[ ${YUM_EVENT} -ge ${YUM_HISTORY_EVENT} ]]; then
     continue
   fi 
 
