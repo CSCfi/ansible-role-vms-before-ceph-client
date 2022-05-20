@@ -28,4 +28,4 @@ Example Playbook
 
 Limitation
 ----------
-The current version does not consider the downgrade or remove of Ceph clients in hypervisors.
+The current version does not consider the downgrade or remove of Ceph clients in hypervisors. A warning message is shown in case a downgrade and there is a possibility to list the VMs while they have a higher ceph version than $ceph_version.

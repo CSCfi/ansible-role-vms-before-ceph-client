@@ -88,6 +88,34 @@ if version_lt_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
   fi 
 fi
 
+# Show if there are fault positive 
+for YUM_EVENT in $YUM_HISTORY_EVENTS; do
+
+  # Omit the check of previous events. Continue the loop
+  if [[ ${YUM_HISTORY_EVENT} -ge ${YUM_EVENT} ]]; then
+    continue
+  fi 
+
+  CEPH_INFO=$(yum history info $YUM_EVENT|grep ceph-common);
+
+  if [[ ${CEPH_INFO} != *"Dep-Install"* ]] && [[ ${CEPH_INFO} != *"Updated"* ]]; then
+     continue;
+  fi
+
+  if [[ ${CEPH_INFO} == *"Dep-Install"* ]]; then
+     CEPH_VERSION_FAULT_POSITIVE=$(yum history info $YUM_EVENT|grep ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
+  fi
+
+  if [[ ${CEPH_INFO} == *"Updated"* ]]; then
+     CEPH_VERSION_FAULT_POSITIVE=$(yum history info $YUM_EVENT|grep -A1 ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
+  fi
+
+  if version_le_op $CEPH_VERSION $CEPH_VERSION_FAULT_POSITIVE; then
+    echo "There are fault positives. Thus, some VMs can be listed either have upper ceph version than $CEPH_VERSION"
+    break
+  fi
+done
+
 echo "+-----------------------------+"
 echo "|   CEPH VERSION IS $CEPH_VERSION   |"
 echo "+-----------------------------+"
