@@ -50,11 +50,11 @@ YUM_HISTORY_EVENTS=$(yum history list all|grep -Po "^\s+\d+")
 for YUM_HISTORY_EVENT in $YUM_HISTORY_EVENTS; do
   CEPH_INFO=$(yum history info $YUM_HISTORY_EVENT|grep ceph-common);
 
-  if [[ ${CEPH_INFO} != *"Dep-Install"* ]] && [[ ${CEPH_INFO} != *"Updated"* ]]; then
+  if [[ ${CEPH_INFO} != *"Install"* ]] && [[ ${CEPH_INFO} != *"Updated"* ]]; then
      continue;
   fi
 
-  if [[ ${CEPH_INFO} == *"Dep-Install"* ]]; then
+  if [[ ${CEPH_INFO} == *"Install"* ]]; then
      CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
   fi
 
@@ -98,11 +98,11 @@ for YUM_EVENT in $YUM_HISTORY_EVENTS; do
 
   CEPH_INFO=$(yum history info $YUM_EVENT|grep ceph-common);
 
-  if [[ ${CEPH_INFO} != *"Dep-Install"* ]] && [[ ${CEPH_INFO} != *"Updated"* ]]; then
+  if [[ ${CEPH_INFO} != *"Install"* ]] && [[ ${CEPH_INFO} != *"Updated"* ]]; then
      continue;
   fi
 
-  if [[ ${CEPH_INFO} == *"Dep-Install"* ]]; then
+  if [[ ${CEPH_INFO} == *"Install"* ]]; then
      CEPH_VERSION_FAULT_POSITIVE=$(yum history info $YUM_EVENT|grep ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
   fi
 
@@ -110,16 +110,17 @@ for YUM_EVENT in $YUM_HISTORY_EVENTS; do
      CEPH_VERSION_FAULT_POSITIVE=$(yum history info $YUM_EVENT|grep -A1 ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
   fi
 
-  if version_le_op $CEPH_VERSION $CEPH_VERSION_FAULT_POSITIVE; then
+  if version_le_op $CEPH_VERSION $CEPH_VERSION_FAULT_POSITIVE;  then
     echo "There are fault positives. Thus, some VMs can be listed either have upper ceph version than $CEPH_VERSION"
     break
   fi
 done
 
-echo "+-----------------------------+"
-echo "|   CEPH VERSION IS $CEPH_VERSION   |"
-echo "+-----------------------------+"
-
+if version_le_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
+  echo "+-----------------------------+"
+  echo "|   CEPH VERSION IS $CEPH_VERSION   |"
+  echo "+-----------------------------+"
+fi
 # Retrieve a list of all QEMU process IDs
 PIDS=$(pgrep -f "^/usr/libexec/qemu-kvm")
 
