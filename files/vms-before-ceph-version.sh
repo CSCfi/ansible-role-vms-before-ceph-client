@@ -111,7 +111,7 @@ for YUM_EVENT in $YUM_HISTORY_EVENTS; do
   fi
 
   if version_le_op $CEPH_VERSION $CEPH_VERSION_FAULT_POSITIVE;  then
-    echo "There are fault positives. Thus, some VMs can be listed either have upper ceph version than $CEPH_VERSION"
+    echo "There are fault positives. Thus, some VMs can be listed either have upper ceph version than $CEPH_VERSION_EXPECTED"
     break
   fi
 done
