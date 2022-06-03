@@ -58,6 +58,7 @@ for YUM_HISTORY_EVENT in $YUM_HISTORY_EVENTS; do
   fi
 
   # Extract the ceph version in case of a fresh install.
+  # tail -1 is used here to ensure that we get the last line of ceph-common-2:xx.y.zz-0.el7.x86_64
   if [[ ${CEPH_INFO} == *"Install"* ]]; then
      CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
   fi
