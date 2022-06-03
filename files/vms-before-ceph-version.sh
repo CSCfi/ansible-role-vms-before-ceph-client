@@ -95,7 +95,7 @@ fi
 # In case that there is no prior ceph version than $CEPH_VERSION_EXPECTED. 
 # This means that the code has completed the previous loop without break.
 if version_lt_op $CEPH_VERSION_EXPECTED $CEPH_VERSION; then
-    echo "There is no Ceph version prior than $CEPH_VERSION_EXPECTED is installed" 1>&2
+    echo "There is no Ceph version lower or equal to $CEPH_VERSION_EXPECTED is installed" 1>&2
     exit 0
 fi
 
