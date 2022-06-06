@@ -15,7 +15,7 @@
   register: vms_list
 
 - name: Print script output
-  ansible.builtin.debug:
+  debug:
     var: vms_list.stdout_lines
 
 - name: Clean verification script
