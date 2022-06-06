@@ -19,6 +19,7 @@ version_lt_op() {
     [ "$1" = "$2" ] && return 1 || version_le_op $1 $2
 }
 
+# This function shows the utilization parmeters
 usage() {
   echo "Usage: $0 "
   echo " [--help|-h|-?],  to show the help"
@@ -47,39 +48,58 @@ done
 
 YUM_HISTORY_EVENTS=$(yum history list all|grep -Po "^\s+\d+")
 
+# Loop on all the events list related to ceph-common
 for YUM_HISTORY_EVENT in $YUM_HISTORY_EVENTS; do
   CEPH_INFO=$(yum history info $YUM_HISTORY_EVENT|grep ceph-common);
 
+  # Avoid all events, such as remove, except the install and updates of ceph-common   
   if [[ ${CEPH_INFO} != *"Install"* ]] && [[ ${CEPH_INFO} != *"Updated"* ]]; then
      continue;
   fi
 
+  # Extract the ceph version in case of a fresh install.
+  # tail -1 is used here to ensure that we get the last line of ceph-common-2:xx.y.zz-0.el7.x86_64
   if [[ ${CEPH_INFO} == *"Install"* ]]; then
      CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
   fi
 
+  # Extract the ceph version in case of an update.
   if [[ ${CEPH_INFO} == *"Updated"* ]]; then
      CEPH_VERSION=$(yum history info $YUM_HISTORY_EVENT|grep -A1 ceph-common|tail -1|awk -F':' '{print $2}'|awk -F'-' '{print $1}')
   fi
 
+  # Get the date and timestamp of ceph update or install.
   CEPH_UPGRADE_DATE=$(yum history info $YUM_HISTORY_EVENT|grep '^Begin time'|awk -F' : ' '{print $2}')
   CEPH_UPGRADE_TIMESTAMP=$(date -d "$CEPH_UPGRADE_DATE" +%s)
 
+  # Break in case that $CEPH_VERSION is lower or equal to $CEPH_VERSION_EXPECTED.
   if version_le_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
     break
   fi
 
+  # Save the previous information in case $CEPH_VERSION is strictly lower than $CEPH_VERSION_EXPECTED. 
+  # In this case, we have to use the previous $CEPH_VERSION in the loop that has higher timestamp either is higher than $CEPH_VERSION_EXPECTED.
   PREVIOUS_CEPH_VERSION=$CEPH_VERSION
   PREVIOUS_CEPH_UPGRADE_DATE=$CEPH_UPGRADE_DATE
   PREVIOUS_CEPH_UPGRADE_TIMESTAMP=$CEPH_UPGRADE_TIMESTAMP
 
 done
 
+# In case that the ceph is not installed in the system. 
+# No prior install or update of ceph client
 if [[ -z "$CEPH_UPGRADE_TIMESTAMP" ]]; then
-    echo "There is no Ceph version prior $CEPH_VERSION_EXPECTED is installed" 1>&2
+    echo "Ceph is not installed in the system" 1>&2
     exit 0
 fi
 
+# In case that there is no prior ceph version than $CEPH_VERSION_EXPECTED. 
+# This means that the code has completed the previous loop without break.
+if version_lt_op $CEPH_VERSION_EXPECTED $CEPH_VERSION; then
+    echo "There is no Ceph version lower or equal to $CEPH_VERSION_EXPECTED is installed" 1>&2
+    exit 0
+fi
+
+# In case that $CEPH_VERSION is strictly lower than $CEPH_VERSION_EXPECTED, the previous $CEPH_VERSION in the loop that has higher timestamp either is higher than $CEPH_VERSION_EXPECTED should be used.
 if version_lt_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
   if [[ ${PREVIOUS_CEPH_UPGRADE_TIMESTAMP+x} ]]; then
     CEPH_VERSION=$PREVIOUS_CEPH_VERSION
@@ -112,9 +132,9 @@ for YUM_EVENT in $YUM_HISTORY_EVENTS; do
 
   if version_le_op $CEPH_VERSION $CEPH_VERSION_FAULT_POSITIVE;  then
     if version_le_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
-    echo "There are fault positives. Thus, some VMs can be listed either have upper ceph version than $CEPH_VERSION"
+    echo "There are false positives. Thus, some VMs can be listed either have upper ceph version than $CEPH_VERSION"
     else
-    echo "There are fault positives. Thus, some VMs can be listed either have upper ceph version than $CEPH_VERSION_EXPECTED"
+    echo "There are false positives. Thus, some VMs can be listed either have upper ceph version than $CEPH_VERSION_EXPECTED"
     fi
     break
   fi
@@ -125,6 +145,7 @@ if version_le_op $CEPH_VERSION $CEPH_VERSION_EXPECTED; then
   echo "|   CEPH VERSION IS $CEPH_VERSION   |"
   echo "+-----------------------------+"
 fi
+
 # Retrieve a list of all QEMU process IDs
 PIDS=$(pgrep -f "^/usr/libexec/qemu-kvm")
 
