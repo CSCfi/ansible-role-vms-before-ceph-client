@@ -88,14 +88,14 @@ done
 # In case that the ceph is not installed in the system. 
 # No prior install or update of ceph client
 if [[ -z "$CEPH_UPGRADE_TIMESTAMP" ]]; then
-    echo "Ceph is not installed in the system" 1>&2
+    echo "Ceph is not installed in the system"
     exit 0
 fi
 
 # In case that there is no prior ceph version than $CEPH_VERSION_EXPECTED. 
 # This means that the code has completed the previous loop without break.
 if version_lt_op $CEPH_VERSION_EXPECTED $CEPH_VERSION; then
-    echo "There is no Ceph version lower or equal to $CEPH_VERSION_EXPECTED is installed" 1>&2
+    echo "There is no Ceph version lower or equal to $CEPH_VERSION_EXPECTED is installed"
     exit 0
 fi
 
