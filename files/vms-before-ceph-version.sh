@@ -113,7 +113,7 @@ PIDS=$(pgrep -f "^/usr/libexec/qemu-kvm")
 
 for PID in $PIDS; do
   # Get QEMU process start time
-  QEMU_TIMESTAMP=$(date -d "$(stat -c %x /proc/$PID/stat)" +%s)
+  QEMU_TIMESTAMP=$(date -d "$(ps -p $PID -o lstart=)" +%s)
   if [[ "$QEMU_TIMESTAMP" -lt "$CEPH_UPGRADE_TIMESTAMP" ]]
   then
     # Get virsh instance ID and name
